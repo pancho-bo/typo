@@ -96,6 +96,42 @@ describe Article do
     b = Article.find(a.id)
     assert_equal 1, b.categories.size
   end
+ 
+  context "merging articles" do
+    before :each do
+        @a=FactoryGirl.create(:article, :author => "Alice", :title => "A", :body => "This is A")
+        @b=FactoryGirl.create(:article, :author => "Bob", :title => "B", :body => "This is B")
+    end
+
+
+    it "should merge articles" do
+        @a.merge_with(@b.id)
+        c=Article.find_by_title("B")
+        c.title.should == "B"
+        c.body.should =~ /This is A/
+        c.body.should =~ /This is B/
+        c.author.should == "Bob"
+        lambda { Article.find(@a.id) }.
+            should raise_error(ActiveRecord::RecordNotFound) 
+
+    end
+
+    it "should preserve comments" do
+        c1=FactoryGirl.create(:comment, :article => @a)
+        c2=FactoryGirl.create(:comment, :article => @b)
+        @a.merge_with(@b.id)
+        c=Article.find_by_title("B")
+        c.comments.count.should == 2
+    end
+
+    it "should raise an error if no such article" do
+        Article.destroy(@b.id)
+        lambda { @a.merge_with(@b) }.
+            should raise_error(ActiveRecord::RecordNotFound)
+    end
+
+   end
+
 
   it "test_permalink_with_title" do
     article = Factory(:article, :permalink => 'article-3', :published_at => Time.utc(2004, 6, 1))

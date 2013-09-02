@@ -622,6 +622,29 @@ describe Admin::ContentController do
     it_should_behave_like 'new action'
     it_should_behave_like 'destroy action'
 
+    describe 'merge action' do
+      it 'should call merge_with' do
+        Article.any_instance.should_receive(:merge_with)
+        post :merge, :id => @article.id, :merge_with => 1
+      end
+
+      it 'should pass merge_id to merge_with' do
+        Article.any_instance.should_receive(:merge_with).with(1)
+        post :merge, :id => @article.id, :merge_with => 1
+      end
+
+      it 'should redirect if merging success' do
+          post :merge, :id => @article.id, :merge_with => 1
+          response.should redirect_to(:action => 'index')
+      end
+
+      it 'should not redirect if no param send' do
+          post :merge, :id => @article.id
+          response.should redirect_to(:action => 'edit')
+      end
+
+    end
+
     describe 'edit action' do
 
       it "should redirect if edit article doesn't his" do
@@ -671,4 +694,6 @@ describe Admin::ContentController do
 
     end
   end
+
+
 end

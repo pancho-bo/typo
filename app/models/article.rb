@@ -80,6 +80,15 @@ class Article < Content
     Article.exists?({:parent_id => self.id})
   end
 
+  def merge_with(merging_id)
+    merged=Article.find(merging_id)
+    #update(:title => merged.title,:body => merged.body+"\n"+body,:author => merged.author)
+    Article.update(merged.id,:body => merged.body+"\n"+body)
+    Comment.where("article_id = :id", {:id => id}).
+        update_all(:article_id => merged.id)
+    Article.destroy(id)
+  end
+
   attr_accessor :draft, :keywords
 
   has_state(:state,
@@ -466,4 +475,5 @@ class Article < Content
     to = to - 1 # pull off 1 second so we don't overlap onto the next day
     return from..to
   end
+
 end
