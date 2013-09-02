@@ -7,15 +7,20 @@ class Admin::ContentController < Admin::BaseController
   cache_sweeper :blog_sweeper
 
   def merge
-      @article=Article.find_by_id params[:id]
-      merge_id=params[:merge_with]
-      if merge_id then
-        @article.merge_with(merge_id)
-        redirect_to :action => 'index' 
-        return
+      if current_user.profile.nicename == "Typo administrator" then
+        @article=Article.find_by_id params[:id]
+        merge_id=params[:merge_with]
+        if merge_id then
+          @article.merge_with(merge_id)
+          redirect_to :action => 'index' 
+          return
+        end
+        flash[:error] = "Merge ID should not be empty"
+        redirect_to :action => 'edit'
+      else
+        flash[:error] = "You are not allowed to merge articles"
+        redirect_to :action => 'edit'
       end
-      flash[:error] = "Merge ID should not be empty"
-      redirect_to :action => 'edit'
   end
 
   def auto_complete_for_article_keywords
@@ -156,6 +161,7 @@ class Admin::ContentController < Admin::BaseController
     id = params[:article][:id] if params[:article] && params[:article][:id]
     @article = Article.get_or_build_article(id)
     @article.text_filter = current_user.text_filter if current_user.simple_editor?
+    @admin = true if current_user.profile.nicename == "Typo administrator"
 
     @post_types = PostType.find(:all)
     if request.post?
